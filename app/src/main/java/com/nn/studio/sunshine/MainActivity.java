@@ -24,6 +24,7 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity {
+    private final String TAG = this.getClass().getName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +35,38 @@ public class MainActivity extends ActionBarActivity {
                     .add(R.id.container, new ForecastFragment())
                     .commit();
         }
+        Log.v(TAG, "ON CREATE");
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.v(TAG, "ON START");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.v(TAG, "ON PAUSE");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.v(TAG, "ON STOP");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.v(TAG, "ON RESUME");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.v(TAG, "ON DESTROY");
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

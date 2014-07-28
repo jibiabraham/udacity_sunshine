@@ -6,4 +6,12 @@
         android:defaultValue="@string/pref_location_default"
         android:inputType="text"
         android:singleLine="true"/>
+    <ListPreference
+        android:key="@string/pref_temp_unit_key"
+        android:title="@string/pref_temp_unit_label"
+        android:entries="@array/pref_temp_entries"
+        android:entryValues="@array/pref_temp_values"
+        android:defaultValue="@string/pref_temp_unit_default"
+        android:summary="%s"
+        />
 </PreferenceScreen>

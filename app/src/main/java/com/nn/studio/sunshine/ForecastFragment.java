@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -32,7 +33,11 @@ import java.util.List;
 
 
 public class ForecastFragment extends Fragment {
+    private final String TAG = this.getClass().getName();
     private ArrayAdapter<String> mAdapter;
+    private List<WeatherModel> mAdapterBackingData;
+    private final int METRIC_UNITS = 0;
+    private final int IMPERIAL_UNITS = 1;
 
     public ForecastFragment() {}
 
@@ -40,6 +45,16 @@ public class ForecastFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        preferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if(key.equals(getString(R.string.pref_temp_unit_key))){
+
+                }
+            }
+        });
     }
 
     @Override
@@ -62,7 +77,14 @@ public class ForecastFragment extends Fragment {
                 startActivity(detailedActivityLaunch);
             }
         });
+
         return rootView;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
     }
 
     @Override
@@ -75,7 +97,10 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         switch (id){
             case R.id.action_refresh:
-                new FetchWeatherTask().execute("94043");
+                updateWeather();
+                return true;
+            case R.id.action_view_map:
+                showLocationOnMap();
                 return true;
             default:
                 break;
@@ -83,17 +108,61 @@ public class ForecastFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+    private void showLocationOnMap() {
+        Intent mapIntent =  new Intent(Intent.ACTION_VIEW);
+        String location = userLocation();
+        Uri geoLocation = Uri.parse("geo:0,0?q=" + location);
+        if(mapIntent.resolveActivity(getActivity().getPackageManager()) != null){
+            mapIntent.setData(geoLocation);
+            startActivity(mapIntent);
+        }
+    }
+
+    private String userLocation(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String LOCATION_KEY = getResources().getString(R.string.pref_location_key);
+        String defaultLocation = getResources().getString(R.string.pref_location_default);
+        String location = prefs.getString(LOCATION_KEY, defaultLocation);
+
+        return location;
+    }
+
+    private int temperatureUnit(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String TEMP_UNIT_KEY = getString(R.string.pref_temp_unit_key);
+        String defaultUnit = getResources().getString(R.string.pref_temp_unit_default);
+        String currentUnit = prefs.getString(TEMP_UNIT_KEY, defaultUnit);
+
+        Log.v(TAG, "CurrentUNIT::" + currentUnit);
+        return Integer.parseInt(currentUnit);
+    }
+
+    private void setWeatherList(){
+        if(mAdapter != null && mAdapterBackingData != null){
+            mAdapter.clear();
+            int tempUnit = temperatureUnit();
+            Boolean isImperialSystem = tempUnit == IMPERIAL_UNITS;
+            for (WeatherModel model: mAdapterBackingData){
+                mAdapter.add(model.toString(isImperialSystem));
+            }
+        }
+    }
+
+    private void updateWeather(){
+        new FetchWeatherTask().execute(userLocation());
+    }
+
+    public class FetchWeatherTask extends AsyncTask<String, Void, ArrayList<WeatherModel>> {
         private final String TAG = this.getClass().getName();
         @Override
-        protected String[] doInBackground(String... postCodes) {
+        protected ArrayList<WeatherModel> doInBackground(String... postCodes) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
             // Will contain the raw JSON response as a string.
-            String[] forecasts = null;
+            ArrayList<WeatherModel> forecasts = new ArrayList<WeatherModel>();
             String forecastJsonStr = null;
 
             try {
@@ -107,7 +176,7 @@ public class ForecastFragment extends Fragment {
                         appendPath(baseUrl).
                         appendQueryParameter("q", postCodes[0]).
                         appendQueryParameter("mode", "json").
-                        appendQueryParameter("unit", "metric").
+                        appendQueryParameter("units", "metric").
                         appendQueryParameter("cnt", "7");
                 URL url = new URL(builder.toString());
 
@@ -158,7 +227,7 @@ public class ForecastFragment extends Fragment {
             }
 
             try {
-                forecasts = WeatherDataParser.getWeatherDataFromJson(forecastJsonStr, 7);
+                forecasts = WeatherDataParser.getWeatherDataFromJson(forecastJsonStr);
             } catch (JSONException ex){
                 ex.printStackTrace();
                 return null;
@@ -168,9 +237,10 @@ public class ForecastFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(String[] strings) {
-            for (String item : strings){
-                mAdapter.add(item);
+        protected void onPostExecute(ArrayList<WeatherModel> weatherModels) {
+            if(weatherModels != null){
+                mAdapterBackingData = weatherModels;
+                setWeatherList();
             }
             //mAdapter.notifyDataSetChanged();
         }

@@ -12,4 +12,17 @@
     <string name="pref_location_label">Location</string>
     <string name="pref_location_key">location</string>
     <string name="pref_location_default">94043</string>
+
+    <string name="pref_temp_unit_label">Temperature Unit</string>
+    <string name="pref_temp_unit_key">temperature_unit</string>
+    <string name="pref_temp_unit_default">0</string>
+    <string name="option_view_map">Location on map</string>
+    <string-array name="pref_temp_entries">
+        <item>Metric \u2103</item>
+        <item>Imperial \u2109</item>
+    </string-array>
+    <string-array name="pref_temp_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
 </resources>

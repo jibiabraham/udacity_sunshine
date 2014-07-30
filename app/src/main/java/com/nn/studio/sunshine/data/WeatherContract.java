@@ -18,11 +18,14 @@ package com.nn.studio.sunshine.data;
 import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 /**
  * Defines table and column names for the weather database.
  */
 public class WeatherContract {
+    private static final String TAG = "WeatherContract";
+
     private static final String SCHEME = "content://";
     public static final String AUTHORITY = "com.nn.studio.sunshine";
     private static final Uri BASE_CONTENT_URI = Uri.parse(SCHEME + AUTHORITY);
@@ -73,8 +76,7 @@ public class WeatherContract {
             return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
         }
 
-        public static Uri buildWeatherLocationWithStartDate(
-                String locationSetting, String startDate) {
+        public static Uri buildWeatherLocationWithStartDate(String locationSetting, String startDate) {
             return CONTENT_URI.buildUpon().appendPath(locationSetting)
                     .appendQueryParameter(COLUMN_DATETEXT, startDate).build();
         }
@@ -88,6 +90,7 @@ public class WeatherContract {
         }
 
         public static String getDateFromUri(Uri uri) {
+            Log.d(TAG, uri.toString());
             return uri.getPathSegments().get(2);
         }
 
